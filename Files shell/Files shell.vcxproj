@@ -152,8 +152,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="commands.h" />
-    <ClInclude Include="FiSh_constants.h" />
     <ClInclude Include="data_types.h" />
+    <ClInclude Include="FiSh_constants.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="FiSh_utils.h" />
   </ItemGroup>

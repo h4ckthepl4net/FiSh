@@ -21,13 +21,13 @@
     <ClInclude Include="commands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="data_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FiSh_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FiSh_constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="data_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
