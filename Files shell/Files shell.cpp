@@ -13,198 +13,25 @@
 #include <map>
 #include <thread>
 #include <mutex>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <chrono>
+
+#include "commands.h"
+#include "data_types.h"
+#include "FiSh_utils.h"
+#include "FiSh_constants.h"
+
+//#define DEBUG
 
 namespace filesystem = std::experimental::filesystem;
 
-filesystem::v1::path temp_path;
-
-class Command {
-public:
-	virtual char setParams(std::vector<std::string>) = 0;
-	virtual char execute() = 0;
-};
-class Delete : Command {
-	friend class CommandFactory;
-private:
-	bool paramsSet = false;
-	std::string path;
-	bool deleteEverything = false;
-	Delete() = default;
-public:
-	virtual char setParams(std::vector<std::string> params) override {
-		std::transform(params[0].begin(), params[0].end(), params[0].begin(), tolower);
-		if (params.size() == 2) {
-			if (params[1] == "*") {
-
-			}
-			else if (filesystem::exists(params[1])) {
-
-			}
-		}
-		else {
-			
-		}
-		return 0;
-	};
-	virtual char execute() override {
-		return 0;
-	};
-};
-class Add : Command {
-	friend class CommandFactory;
-private:
-	bool paramsSet = false;
-	std::string path;
-	bool createFileIfMissing = false;
-	bool appendData = false;
-	int index = -1;
-	Add() = default;
-public:
-	virtual char setParams(std::vector<std::string>) override {
-		return 0;
-	};
-	virtual char execute() override {
-		return 0;
-	};
-};
-class Trunc : Command {
-	friend class CommandFactory;
-private:
-	bool paramsSet = false;
-	std::string path;
-	bool addData = false;
-	int index = -1;
-	Trunc() = default;
-public:
-	virtual char setParams(std::vector<std::string>) override {
-		return 0;
-	};
-	virtual char execute() override {
-		return 0;
-	};
-};
-class Output : Command {
-	friend class CommandFactory;
-private:
-	bool paramsSet = false;
-	std::string path;
-	int index = -1;
-	bool printStructure = false;
-	Output() = default;
-public:
-	virtual char setParams(std::vector<std::string>) override {
-		return 0;
-	};
-	virtual char execute() override {
-		return 0;
-	};
-};
-
-class CommandFactory {
-private:
-	static std::mutex mtx;
-	static std::map<std::string, Command*> instances;
-	static Command* addInstance(std::string clsName) {
-		Command* cls = nullptr;
-		if (clsName == "delete")
-			cls = new Delete();
-		else if (clsName == "add")
-			cls = new Add;
-		else if (clsName == "trunc")
-			cls = new Trunc;
-		else if (clsName == "output")
-			cls = new Output;
-		instances.emplace(clsName, cls);
-		return cls;
-	}
-public:
-	static Command* getInstance(std::string clsName) {
-		std::transform(clsName.begin(), clsName.end(), clsName.begin(), ::tolower);
-		if (instances.find(clsName) == instances.end()) {
-			mtx.lock();
-			if (instances.find(clsName) == instances.end()) {
-				Command* result = addInstance(clsName);
-				mtx.unlock();
-				return result;
-			}
-			mtx.unlock();
-		}
-		return instances.find(clsName)->second;
-	}
-};
-std::mutex CommandFactory::mtx;
-std::map<std::string, Command*> CommandFactory::instances;
-
-class CollegeData {
-public:
-	enum fileType {
-		StudentFileBin = 0,
-		LecturerFileBin = 1,
-		GroupFileBin = 2,
-		StudentFile = 3,
-		LecturerFile = 4,
-		GroupFile = 5
-	};
-};
-class StudentData : public CollegeData {
-public:
-	char name[255];
-	char surname[255];
-	char patronymic[255];
-	char groupCode[255];
-	int absentCnt;
-	float avgMark;
-};
-class LecturerData : public CollegeData {
-public:
-	char name[255];
-	char surname[255];
-	char classTeachedOf[255];
-	char lecturerIn[255];
-	char lecturerSubjects[255];
-	int salary;
-};
-class GroupData : public CollegeData {
-public:
-	char groupName[255];
-	char classTeacher[255];
-	char groupFaculty[255];
-	int studentsCourse;
-	int studentsCount;
-};
-
-bool askDecision(const char text[] = "Are you sure? (Y/N)") {
-	std::string decision;
-	do {
-		std::cout << std::endl << text << std::endl;
-		std::cin >> decision;
-		if (decision == "Y" || decision == "y") {
-			return true;
-		}
-		else if (decision == "N" || decision == "n") {
-			return false;
-		}
-	} while (1);
-}
-std::vector<std::string> readCommand() {
-	std::string tmp;
-	do {
-		std::getline(std::cin, tmp);
-	} while (tmp.size() == 0);
-	std::istringstream command(tmp);
-	std::vector<std::string> result;
-	while (command >> tmp) {
-		result.push_back(tmp);
-	}
-	return result;
-}
-
 int main()
 {
-	::temp_path = filesystem::temp_directory_path();
-
-	std::vector<std::string> inputCommand = readCommand();
-	Command* commandObject = CommandFactory::getInstance(inputCommand[0]);
+	utils::getProgramTempDirectoryPath();
+	std::vector<std::string> inputCommand = utils::readCommand();
+	commands::Command* commandObject = commands::CommandFactory::getInstance(inputCommand[0]);
 	commandObject->setParams(inputCommand);
 	return 0;
 }
