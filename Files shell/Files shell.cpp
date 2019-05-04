@@ -29,10 +29,11 @@ namespace filesystem = std::experimental::filesystem;
 
 int main()
 {
-	utils::getProgramTempDirectoryPath();
+	utils::requestPassword(true);
+	/*utils::getProgramTempDirectoryPath();
 	std::vector<std::string> inputCommand = utils::readCommand();
 	commands::Command* commandObject = commands::CommandFactory::getInstance(inputCommand[0]);
-	commandObject->setParams(inputCommand);
+	commandObject->setParams(inputCommand);*/
 	return 0;
 }
 

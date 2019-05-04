@@ -3,6 +3,41 @@
 
 namespace commands {
 
+	bool Root::rootMode = false;
+	Root::Root() = default;
+	char Root::setRootMode(std::string mode) {
+		char errCode = 0;
+		if (mode == "on") {
+			
+		}
+		else if (mode == "off") {
+			
+		}
+		else {
+
+		}
+		return errCode;
+	};
+	bool Root::isRootMode() {
+		return rootMode;
+	}
+	char Root::setParams(std::vector<std::string> params) {
+		char errCode;
+		std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
+		this->commandObj = CommandFactory::getInstance(params[1]);
+		if (this->commandObj == nullptr) {
+			errCode = setRootMode(params[1]);
+		}
+		else {
+			errCode = this->commandObj->setParams(params);
+		}
+		return errCode;
+	};
+	char Root::execute() {
+		char errCode = 0;
+		return errCode;
+	};
+
 	Delete::Delete() = default;
 	char Delete::setParams(std::vector<std::string> params) {
 		std::transform(params[0].begin(), params[0].end(), params[0].begin(), tolower);
@@ -53,15 +88,26 @@ namespace commands {
 	std::map<std::string, Command*> CommandFactory::instances;
 	Command* CommandFactory::addInstance(std::string clsName) {
 		Command* cls = nullptr;
-		if (clsName == "delete")
+		if (clsName == "delete") {
 			cls = new Delete();
-		else if (clsName == "add")
+			instances.emplace(clsName, cls);
+		}
+		else if (clsName == "add") {
 			cls = new Add;
-		else if (clsName == "trunc")
+			instances.emplace(clsName, cls);
+		}
+		else if (clsName == "trunc") {
 			cls = new Trunc;
-		else if (clsName == "output")
+			instances.emplace(clsName, cls);
+		}
+		else if (clsName == "output") {
 			cls = new Output;
-		instances.emplace(clsName, cls);
+			instances.emplace(clsName, cls);
+		}
+		else if (clsName == "root") {
+			cls = new Root;
+			instances.emplace(clsName, cls);
+		}
 		return cls;
 	}
 	Command* CommandFactory::getInstance(std::string clsName) {

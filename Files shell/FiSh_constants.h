@@ -1,6 +1,6 @@
 #pragma once
-#ifndef FISH_CONSTANTS
-#define FISH_CONSTANTS
+#ifndef FISH_CONSTANTS_H
+#define FISH_CONSTANTS_H
 
 #include <filesystem>
 

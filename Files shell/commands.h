@@ -1,6 +1,6 @@
 #pragma once
-#ifndef COMMANDS
-#define COMMANDS
+#ifndef COMMANDS_H
+#define COMMANDS_H
 
 #include <iostream>
 #include <string>
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <chrono>
 
-namespace commands {
+namespace commands { 
 
 	class Command {
 	private:
@@ -26,6 +26,19 @@ namespace commands {
 	public:
 		virtual char setParams(std::vector<std::string>) = 0;
 		virtual char execute() = 0;
+	};
+
+	class Root : Command {
+		friend class CommandFactory;
+	private:
+		static bool rootMode;
+		Command* commandObj = nullptr;
+		Root();
+	public:
+		static char setRootMode(std::string mode);
+		static bool isRootMode();
+		virtual char setParams(std::vector<std::string>) override;
+		virtual char execute() override;
 	};
 
 	class Delete : Command {

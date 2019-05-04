@@ -1,6 +1,6 @@
 #pragma once
-#ifndef DATA_TYPES
-#define DATA_TYPES
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
 
 namespace data_types {
 

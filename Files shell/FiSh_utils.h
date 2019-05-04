@@ -1,6 +1,6 @@
 #pragma once
-#ifndef FISH_UTILS
-#define FISH_UTILS
+#ifndef FISH_UTILS_H
+#define FISH_UTILS_H
 
 #include <iostream>
 #include <string>
@@ -8,6 +8,7 @@
 #include <vector>
 #include <chrono>
 #include <filesystem>
+#include <conio.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -19,12 +20,13 @@
 namespace utils {
 
 	std::string generateRandomName();
-
-	bool askDecision(const char[]);
-
-	std::vector<std::string> readCommand();
-
 	char getProgramTempDirectoryPath();
+	
+	std::vector<std::string> readCommand();
+	bool askDecision(const char[]);
+	
+	bool checkIfPasswordIsSet();
+	char requestPassword(bool);
 
 }
 
