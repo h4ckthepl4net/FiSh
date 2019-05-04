@@ -30,37 +30,36 @@ namespace utils {
 		HKEY key;
 		if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FiSh", 0, KEY_QUERY_VALUE, &key) == ERROR_SUCCESS) {
 			DWORD type = REG_SZ;
-			std::string keyVal;
 			char* keyRawVal = new char[49];
 			DWORD buffSize = 49;
 			if (RegQueryValueExA(key, "", NULL, &type, (LPBYTE)keyRawVal, &buffSize) == ERROR_SUCCESS && strlen(keyRawVal) > 28) {
-				keyVal = keyRawVal;
+				constants::temp_directory_name = keyRawVal;
 				delete[] keyRawVal;
-				if (!std::experimental::filesystem::exists(constants::temp_path.u8string() + keyVal)) {
-					std::experimental::filesystem::create_directory(constants::temp_path.u8string() + keyVal);
+				if (!std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name)) {
+					std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name);
 				}
 				defaultCase = false;
 			}
 			else {
-				keyVal = keyRawVal;
 				delete[] keyRawVal;
-				keyVal = generateRandomName();
-				if (RegSetValueExA(key, "", NULL, REG_SZ, (LPBYTE)keyVal.c_str(), 49) == ERROR_SUCCESS) {
-					std::experimental::filesystem::create_directory(constants::temp_path.u8string() + keyVal);
+				constants::temp_directory_name = generateRandomName();
+				if (RegSetValueExA(key, "", NULL, REG_SZ, (LPBYTE)constants::temp_directory_name.c_str(), 49) == ERROR_SUCCESS) {
+					std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name);
 					defaultCase = false;
 				}
 			}
 		}
 		else if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FiSh", NULL, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL) == ERROR_SUCCESS) {
-			std::string newFolderName = generateRandomName();
-			if (RegSetValueExA(key, "", NULL, REG_SZ, (LPBYTE)newFolderName.c_str(), 49) == ERROR_SUCCESS) {
-				std::experimental::filesystem::create_directory(constants::temp_path.u8string() + newFolderName);
+			constants::temp_directory_name = generateRandomName();
+			if (RegSetValueExA(key, "", NULL, REG_SZ, (LPBYTE)constants::temp_directory_name.c_str(), 49) == ERROR_SUCCESS) {
+				std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name);
 				defaultCase = false;
 			}
 		}
 		RegCloseKey(key);
 #endif
 		if (defaultCase) {
+			constants::temp_directory_name = constants::defaultDirName;
 			std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::defaultDirName);
 		}
 		return 0;
@@ -92,8 +91,6 @@ namespace utils {
 		} while (1);
 	}
 
-
-
 	void printPseudoPass(unsigned short length, char chrToPrint = '*') {
 		for (int i = 0; i < length; i++) {
 			std::cout << chrToPrint;
@@ -110,7 +107,7 @@ namespace utils {
 		}
 		RegCloseKey(key);
 #endif
-
+		
 		return 0;
 	}
 	char requestPassword(bool settingPassword = false) {
@@ -119,8 +116,17 @@ namespace utils {
 		while (true) {
 			lastChar = _getch();
 			if (lastChar == '\n' || lastChar == '\r') {
-				std::cout << std::endl;
-				break;
+				unsigned short currentLength = inputPassword.size();
+				if (settingPassword && currentLength < 8) {
+					std::cout << "\r";
+					utils::printPseudoPass(currentLength, ' ');
+					std::cout << "\rMinimum password length is 8 characters" << std::endl;
+					utils::printPseudoPass(currentLength);
+				}
+				else if (currentLength) {
+					std::cout << std::endl;
+					break;
+				}
 			}
 			else if (lastChar == '\b' && inputPassword.size() != 0) {
 				inputPassword.pop_back();
@@ -138,7 +144,6 @@ namespace utils {
 					std::cout << ((settingPassword) ? "\rMax password length is 255 characters" : "\rMax input length is 65535 characters") << std::endl;
 					utils::printPseudoPass(currentLength);
 				}
-				
 			}
 			else if (lastChar == 27) {
 				inputPassword.clear();
@@ -152,4 +157,5 @@ namespace utils {
 		}
 		return 0;
 	}
+
 }

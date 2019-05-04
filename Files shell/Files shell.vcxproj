@@ -161,6 +161,7 @@
     <ClCompile Include="commands.cpp" />
     <ClCompile Include="data_types.cpp" />
     <ClCompile Include="Files shell.cpp" />
+    <ClCompile Include="FiSh_constants.cpp" />
     <ClCompile Include="FiSh_utils.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
