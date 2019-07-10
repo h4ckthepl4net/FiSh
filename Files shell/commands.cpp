@@ -24,6 +24,10 @@ namespace commands {
 	char Root::setParams(std::vector<std::string> params) {
 		char errCode;
 		std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
+		while (params[1] == "root") {
+			params.erase(params.begin());
+			std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
+		}
 		this->commandObj = CommandFactory::getInstance(params[1]);
 		if (this->commandObj == nullptr) {
 			errCode = setRootMode(params[1]);
@@ -85,9 +89,9 @@ namespace commands {
 
 
 	std::mutex CommandFactory::mtx;
-	std::map<std::string, Command*> CommandFactory::instances;
-	Command* CommandFactory::addInstance(std::string clsName) {
-		Command* cls = nullptr;
+	std::map<std::string, ICommand*> CommandFactory::instances;
+	ICommand* CommandFactory::addInstance(std::string clsName) {
+		ICommand* cls = nullptr;
 		if (clsName == "delete") {
 			cls = new Delete();
 			instances.emplace(clsName, cls);
@@ -110,12 +114,12 @@ namespace commands {
 		}
 		return cls;
 	}
-	Command* CommandFactory::getInstance(std::string clsName) {
+	ICommand* CommandFactory::getInstance(std::string clsName) {
 		std::transform(clsName.begin(), clsName.end(), clsName.begin(), ::tolower);
 		if (instances.find(clsName) == instances.end()) {
 			mtx.lock();
 			if (instances.find(clsName) == instances.end()) {
-				Command* result = addInstance(clsName);
+				ICommand* result = addInstance(clsName);
 				mtx.unlock();
 				return result;
 			}

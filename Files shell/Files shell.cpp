@@ -32,7 +32,7 @@ int main()
 	utils::getProgramTempDirectoryPath();
 	std::cout << constants::temp_directory_name << std::endl;
 	std::vector<std::string> inputCommand = utils::readCommand();
-	commands::Command* commandObject = commands::CommandFactory::getInstance(inputCommand[0]);
+	commands::ICommand* commandObject = commands::CommandFactory::getInstance(inputCommand[0]);
 	commandObject->setParams(inputCommand);
 	return 0;
 }

@@ -107,6 +107,7 @@ namespace utils {
 		}
 		RegCloseKey(key);
 #endif
+		// TODO: temp directory check
 		
 		return 0;
 	}

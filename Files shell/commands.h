@@ -20,7 +20,7 @@
 
 namespace commands { 
 
-	class Command {
+	class ICommand {
 	private:
 		bool paramsSet = false;
 	public:
@@ -28,11 +28,11 @@ namespace commands {
 		virtual char execute() = 0;
 	};
 
-	class Root : Command {
+	class Root : ICommand {
 		friend class CommandFactory;
 	private:
 		static bool rootMode;
-		Command* commandObj = nullptr;
+		ICommand* commandObj = nullptr;
 		Root();
 	public:
 		static char setRootMode(std::string mode);
@@ -41,7 +41,7 @@ namespace commands {
 		virtual char execute() override;
 	};
 
-	class Delete : Command {
+	class Delete : ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -51,7 +51,7 @@ namespace commands {
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};
-	class Add : Command {
+	class Add : ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -63,7 +63,7 @@ namespace commands {
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};
-	class Trunc : Command {
+	class Trunc : ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -74,7 +74,7 @@ namespace commands {
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};
-	class Output : Command {
+	class Output : ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -91,10 +91,10 @@ namespace commands {
 	class CommandFactory {
 	private:
 		static std::mutex mtx;
-		static std::map<std::string, Command*> instances;
-		static Command* addInstance(std::string);
+		static std::map<std::string, ICommand*> instances;
+		static ICommand* addInstance(std::string);
 	public:
-		static Command* getInstance(std::string);
+		static ICommand* getInstance(std::string);
 	};
 
 }
