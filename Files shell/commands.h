@@ -18,6 +18,8 @@
 #include <stdlib.h>
 #include <chrono>
 
+#include "FiSh_utils.h"
+
 namespace commands { 
 
 	class ICommand {
@@ -95,6 +97,7 @@ namespace commands {
 		static ICommand* addInstance(std::string);
 	public:
 		static ICommand* getInstance(std::string);
+		static void clearFactory();
 	};
 
 }

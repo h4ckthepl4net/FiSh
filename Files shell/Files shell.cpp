@@ -31,9 +31,18 @@ int main()
 {
 	utils::getProgramTempDirectoryPath();
 	std::cout << constants::temp_directory_name << std::endl;
-	std::vector<std::string> inputCommand = utils::readCommand();
-	commands::ICommand* commandObject = commands::CommandFactory::getInstance(inputCommand[0]);
-	commandObject->setParams(inputCommand);
+	while (1) {
+		std::vector<std::string> inputCommand = utils::readCommand();
+		commands::ICommand* commandObject = commands::CommandFactory::getInstance(inputCommand[0]);
+		if (commandObject) {
+			commandObject->setParams(inputCommand);
+			commandObject->execute();
+		}
+		else {
+			// TODO: Show help message
+		}
+	}
+	commands::CommandFactory::clearFactory();
 	return 0;
 }
 

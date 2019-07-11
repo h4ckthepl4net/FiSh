@@ -8,7 +8,14 @@ namespace commands {
 	char Root::setRootMode(std::string mode) {
 		char errCode = 0;
 		if (mode == "on") {
-			
+			if (!rootMode) {
+				std::cout << "Please enter root password!" << std::endl;
+				utils::checkIfPasswordIsSet();
+				utils::requestPassword(false);
+			}
+			else {
+				std::cout << "Root mode is already on!" << std::endl;
+			}
 		}
 		else if (mode == "off") {
 			
@@ -22,23 +29,31 @@ namespace commands {
 		return rootMode;
 	}
 	char Root::setParams(std::vector<std::string> params) {
-		char errCode;
-		std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
-		while (params[1] == "root") {
-			params.erase(params.begin());
+		char errCode = 0;
+		if (params.size() > 1) {
 			std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
-		}
-		this->commandObj = CommandFactory::getInstance(params[1]);
-		if (this->commandObj == nullptr) {
-			errCode = setRootMode(params[1]);
+			while (params[1] == "root") {
+				params.erase(params.begin());
+				std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
+			}
+			this->commandObj = CommandFactory::getInstance(params[1]);
+			if (this->commandObj == nullptr) {
+				errCode = setRootMode(params[1]);
+			}
+			else {
+				errCode = this->commandObj->setParams(params);
+			}
 		}
 		else {
-			errCode = this->commandObj->setParams(params);
+			// TODO: Add help message
 		}
 		return errCode;
 	};
 	char Root::execute() {
 		char errCode = 0;
+		if (commandObj) {
+			this->commandObj->execute();
+		}
 		return errCode;
 	};
 
@@ -94,22 +109,20 @@ namespace commands {
 		ICommand* cls = nullptr;
 		if (clsName == "delete") {
 			cls = new Delete();
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "add") {
 			cls = new Add;
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "trunc") {
 			cls = new Trunc;
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "output") {
 			cls = new Output;
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "root") {
 			cls = new Root;
+		}
+		if (cls) {
 			instances.emplace(clsName, cls);
 		}
 		return cls;
@@ -127,5 +140,13 @@ namespace commands {
 		}
 		return instances.find(clsName)->second;
 	}
-
+	void CommandFactory::clearFactory() {
+		std::map<std::string, ICommand*>::iterator itStart;
+		std::map<std::string, ICommand*>::iterator itEnd;
+		for (itStart = instances.begin(), itEnd = instances.end(); itStart != itEnd; ++itStart) {
+			delete itStart->second;
+			itStart->second = nullptr;
+		}
+		instances.clear();
+	}
 }
