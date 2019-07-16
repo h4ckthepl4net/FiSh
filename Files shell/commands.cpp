@@ -269,7 +269,7 @@ namespace commands {
 		if (instances.find(clsName) == instances.end()) {
 			mtx.lock();
 			if (instances.find(clsName) == instances.end()) {
-				Command* result = createInstance(clsName);
+				ICommand* result = createInstance(clsName);
 				mtx.unlock();
 				return result;
 			}
