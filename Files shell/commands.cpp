@@ -11,7 +11,7 @@ namespace commands {
 			constants::passwordIsSet passSet = utils::checkIfPasswordIsSet();
 			if (passSet == constants::passwordIsSet::PASS_SET) {
 				HKEY rootLockedKey;
-				if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", 0, KEY_QUERY_VALUE, &rootLockedKey) == ERROR_SUCCESS) {
+				if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", 0, KEY_QUERY_VALUE, &rootLockedKey) != ERROR_SUCCESS) {
 					std::cout << "Root password is already set" << std::endl;
 					std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
 					std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
@@ -81,7 +81,7 @@ namespace commands {
 			}
 			else if (passSet == constants::passwordIsSet::PASS_N_SET) {
 				HKEY rootLockedKey;
-				if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", 0, KEY_QUERY_VALUE, &rootLockedKey) == ERROR_SUCCESS) {
+				if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", 0, KEY_QUERY_VALUE, &rootLockedKey) != ERROR_SUCCESS) {
 					std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
 					if (!std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName)) {
 						std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName);

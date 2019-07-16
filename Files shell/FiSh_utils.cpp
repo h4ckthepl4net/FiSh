@@ -105,9 +105,7 @@ namespace utils {
 		}
 		RegCloseKey(key);
 #endif
-		if (std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name) &&
-			std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName) &&
-			std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password")) {
+		if (std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password")) {
 			return (defaultConditions) ? constants::passwordIsSet::PASS_SET : constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E;
 		}
 		else {
