@@ -77,7 +77,7 @@ namespace utils {
 		}
 		return result;
 	}
-	bool askDecision(const char text[] = "Are you sure? (Y/N)") {
+	bool askDecision(const char text[]) {
 		std::string decision;
 		do {
 			std::cout << std::endl << text << std::endl;
@@ -96,21 +96,25 @@ namespace utils {
 			std::cout << chrToPrint;
 		}
 	}
-	bool checkIfPasswordIsSet() {
+	constants::passwordIsSet checkIfPasswordIsSet() {
+		bool defaultConditions = false;
 #ifdef _WIN32
 		HKEY key;
 		if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FiSh\\isPassSet", 0, KEY_QUERY_VALUE, &key) == ERROR_SUCCESS) {
-			return true;
-		}
-		else {
-			return false;
+			defaultConditions = true;
 		}
 		RegCloseKey(key);
 #endif
-		
-		return 0;
+		if (std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name) &&
+			std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName) &&
+			std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password")) {
+			return (defaultConditions) ? constants::passwordIsSet::PASS_SET : constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E;
+		}
+		else {
+			return (defaultConditions) ? constants::passwordIsSet::REG_KEY_E_PASS_FILE_N_E : constants::passwordIsSet::PASS_N_SET;
+		}
 	}
-	char requestPassword(bool settingPassword = false) {
+	std::pair<std::string, unsigned char> requestPassword(bool settingPassword = false) {
 		std::string inputPassword;
 		unsigned char lastChar;
 		while (true) {
@@ -155,7 +159,6 @@ namespace utils {
 				}
 			}
 		}
-		return 0;
+		return std::make_pair(inputPassword, lastChar);
 	}
-
 }

@@ -23,11 +23,11 @@ namespace utils {
 	char getProgramTempDirectoryPath();
 	
 	std::vector<std::string> readCommand();
-	bool askDecision(const char[]);
+	bool askDecision(const char[] = "Are you sure? (Y/N)");
 	
 	void printPseudoPass(unsigned short, char);
-	bool checkIfPasswordIsSet();
-	char requestPassword(bool);
+	constants::passwordIsSet checkIfPasswordIsSet();
+	std::pair<std::string, unsigned char> requestPassword(bool);
 
 }
 

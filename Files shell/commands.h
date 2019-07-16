@@ -17,11 +17,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <chrono>
+#include <windows.h>
+
+#include "FiSh_utils.h"
+#include "FiSh_constants.h"
 
 namespace commands { 
 
 	class Command {
-	private:
+	protected:
+		int errCode = 0;
 		bool paramsSet = false;
 	public:
 		virtual char setParams(std::vector<std::string>) = 0;
@@ -32,6 +37,7 @@ namespace commands {
 		friend class CommandFactory;
 	private:
 		static bool rootMode;
+		std::string mode;
 		Command* commandObj = nullptr;
 		Root();
 	public:
@@ -92,7 +98,7 @@ namespace commands {
 	private:
 		static std::mutex mtx;
 		static std::map<std::string, Command*> instances;
-		static Command* addInstance(std::string);
+		static Command* createInstance(std::string);
 	public:
 		static Command* getInstance(std::string);
 	};
