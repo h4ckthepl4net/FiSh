@@ -168,19 +168,29 @@ namespace commands {
 		return rootMode;
 	}
 	char Root::setParams(std::vector<std::string> params) {
-		std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
-		if (params[1] != "root") {
+		if (params.size() > 1) {
+			std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
+			while (params[1] == "root") {
+				params.erase(params.begin());
+				std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
+			}
 			this->commandObj = CommandFactory::getInstance(params[1]);
-		}
-		if (this->commandObj == nullptr) {
-			this->errCode = setRootMode(params[1]);
+			if (this->commandObj == nullptr) {
+				this->errCode = setRootMode(params[1]);
+			}
+			else {
+				this->errCode = this->commandObj->setParams(params);
+			}
 		}
 		else {
-			this->errCode = this->commandObj->setParams(params);
+			// TODO: Add help message
 		}
 		return this->errCode;
 	};
 	char Root::execute() {
+		if (commandObj) {
+			this->errCode = this->commandObj->execute();
+		}
 		return this->errCode;
 	};
 
@@ -231,32 +241,30 @@ namespace commands {
 
 
 	std::mutex CommandFactory::mtx;
-	std::map<std::string, Command*> CommandFactory::instances;
-	Command* CommandFactory::createInstance(std::string clsName) {
-		Command* cls = nullptr;
+	std::map<std::string, ICommand*> CommandFactory::instances;
+	ICommand* CommandFactory::createInstance(std::string clsName) {
+		ICommand* cls = nullptr;
 		if (clsName == "delete") {
 			cls = new Delete();
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "add") {
 			cls = new Add;
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "trunc") {
 			cls = new Trunc;
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "output") {
 			cls = new Output;
-			instances.emplace(clsName, cls);
 		}
 		else if (clsName == "root") {
 			cls = new Root;
+		}
+		if (cls) {
 			instances.emplace(clsName, cls);
 		}
 		return cls;
 	}
-	Command* CommandFactory::getInstance(std::string clsName) {
+	ICommand* CommandFactory::getInstance(std::string clsName) {
 		std::transform(clsName.begin(), clsName.end(), clsName.begin(), ::tolower);
 		if (instances.find(clsName) == instances.end()) {
 			mtx.lock();
@@ -269,5 +277,13 @@ namespace commands {
 		}
 		return instances.find(clsName)->second;
 	}
-
+	void CommandFactory::clearFactory() {
+		std::map<std::string, ICommand*>::iterator itStart;
+		std::map<std::string, ICommand*>::iterator itEnd;
+		for (itStart = instances.begin(), itEnd = instances.end(); itStart != itEnd; ++itStart) {
+			delete itStart->second;
+			itStart->second = nullptr;
+		}
+		instances.clear();
+	}
 }
