@@ -41,8 +41,9 @@ namespace commands {
 		ICommand* commandObj = nullptr;
 		Root();
 	public:
-		static char setRootMode(std::string mode);
 		static bool isRootMode();
+		static bool blockRoot();
+		static char setRootMode(std::string mode);
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};

@@ -149,12 +149,7 @@ namespace utils {
 			}
 			else if (lastChar == 27) {
 				inputPassword.clear();
-				if (utils::askDecision()) {
-					break;
-				}
-				else {
-					utils::printPseudoPass((unsigned short)inputPassword.size());
-				}
+				break;
 			}
 		}
 		return std::make_pair(inputPassword, lastChar);

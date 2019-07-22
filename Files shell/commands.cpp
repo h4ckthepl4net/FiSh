@@ -5,15 +5,26 @@ namespace commands {
 
 	bool Root::rootMode = false;
 	Root::Root() = default;
+	bool Root::blockRoot() {
+		bool ret = false;
+		HKEY key;
+		if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", NULL, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL) == ERROR_SUCCESS) {
+			ret = true;
+		}
+		RegCloseKey(key);
+		return ret;
+	}
 	char Root::setRootMode(std::string mode) {
+		//TODO: close open files
 		char errCode = 0;
-		if (mode == "set") {
+		HKEY rootLockedKey;
+		if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", 0, KEY_QUERY_VALUE, &rootLockedKey) != ERROR_SUCCESS) {
 			constants::passwordIsSet passSet = utils::checkIfPasswordIsSet();
-			if (passSet == constants::passwordIsSet::PASS_SET) {
-				HKEY rootLockedKey;
-				if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", 0, KEY_QUERY_VALUE, &rootLockedKey) != ERROR_SUCCESS) {
+			std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
+			if (mode == "set")
+			{
+				if (passSet == constants::passwordIsSet::PASS_SET) {
 					std::cout << "Root password is already set" << std::endl;
-					std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
 					std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
 					if (passFile.is_open()) {
 						std::cout << "Enter current password to change it" << std::endl;
@@ -53,7 +64,7 @@ namespace commands {
 										std::fstream passwordTmpFile(passFilePath, std::fstream::out | std::fstream::trunc | std::fstream::binary);
 										//TODO create hash of new password for security
 										if (passwordTmpFile.is_open()) {
-											passwordTmpFile.write(confirmNewPassPair.first.c_str(), confirmNewPassPair.first.size() + 1);
+											passwordTmpFile.write(confirmNewPassPair.first.c_str(), static_cast<unsigned long long int>(confirmNewPassPair.first.size()) + 1);
 											break;
 										}
 										else {
@@ -74,15 +85,7 @@ namespace commands {
 						std::cout << "Couldn't get current password! Exiting..." << std::endl;
 					}
 				}
-				else {
-					std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
-				}
-				RegCloseKey(rootLockedKey);
-			}
-			else if (passSet == constants::passwordIsSet::PASS_N_SET) {
-				HKEY rootLockedKey;
-				if (RegOpenKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", 0, KEY_QUERY_VALUE, &rootLockedKey) != ERROR_SUCCESS) {
-					std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
+				else if (passSet == constants::passwordIsSet::PASS_N_SET) {
 					if (!std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName)) {
 						std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName);
 						int fileAttr = GetFileAttributes((LPCWSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName).c_str());
@@ -95,7 +98,7 @@ namespace commands {
 						do {
 							std::cout << "New password: ";
 							newPassPair = utils::requestPassword(true);
-						} while (newPassPair.second == 27 && utils::askDecision());
+						} while (newPassPair.second == 27 && !utils::askDecision());
 						if (newPassPair.second == 27) {
 							std::cout << "Setting password canceled! Exiting..." << std::endl;
 							break;
@@ -115,7 +118,7 @@ namespace commands {
 								std::fstream passwordTmpFile(passFilePath, std::fstream::out | std::fstream::trunc | std::fstream::binary);
 								//TODO create hash of new password for security
 								if (passwordTmpFile.is_open()) {
-									passwordTmpFile.write(confirmNewPassPair.first.c_str(), confirmNewPassPair.first.size() + 1);
+									passwordTmpFile.write(confirmNewPassPair.first.c_str(), static_cast<long long int>(confirmNewPassPair.first.size()) + 1);
 									int fileAttr = GetFileAttributes((LPCWSTR)passFilePath.c_str());
 									if ((fileAttr & FILE_ATTRIBUTE_HIDDEN) == 0) {
 										SetFileAttributes((LPCWSTR)passFilePath.c_str(), fileAttr | FILE_ATTRIBUTE_HIDDEN);
@@ -128,52 +131,95 @@ namespace commands {
 							}
 							else {
 								std::cout << "Couldn't set new password! Try again please..." << std::endl;
-
 							}
 							RegCloseKey(key);
+							break;
 						}
 						else {
 							std::cout << "New passwords don't match! Try again please..." << std::endl;
 						}
 					}
 				}
-				else {
-					std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+				else if (passSet == constants::passwordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+					passSet == constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E) {
+					if (Root::blockRoot()) {
+						std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+					}
+					else {
+						std::cout << "Can't invoke that command now, please try again!" << std::endl;
+					}
 				}
-				RegCloseKey(rootLockedKey);
 			}
-			else if (passSet == constants::passwordIsSet::REG_KEY_E_PASS_FILE_N_E ||
-				passSet == constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E) {
-				HKEY key;
-				RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FilesShell\\RootModeBlocked", NULL, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
-				std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
-				RegCloseKey(key);
+			else if (mode == "del") {
+				if (passSet == constants::passwordIsSet::PASS_SET) {
+					std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
+					if (passFile.is_open()) {
+						std::cout << "Enter current password to delete existing password!" << std::endl;
+						std::pair<std::string, unsigned char> currentPassPair;
+						do {
+							std::cout << "Current password: ";
+							currentPassPair = utils::requestPassword(false);
+						} while (currentPassPair.second == 27 && !utils::askDecision());
+						if (currentPassPair.second == 27) {
+							std::cout << "Deleting password canceled! Exiting..." << std::endl;
+						}
+						else {
+							char passwordFromFile[256] = "";
+							passFile.read(passwordFromFile, 256);
+							if (currentPassPair.first == passwordFromFile) {
+								passFile.close();
+								std::remove(passFilePath.c_str());
+								RegDeleteKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FiSh\\isPassSet", KEY_WOW64_64KEY, 0);
+							}
+							else {
+								std::cout << "Current password is incorrect!" << std::endl;
+							}
+						}
+					}
+					else {
+						std::cout << "Couldn't get current password! Exiting..." << std::endl;
+					}
+				}
+				else if (passSet == constants::passwordIsSet::PASS_N_SET) {
+					std::cout << "Root password is not set!" << std::endl;
+				}
+				else if (passSet == constants::passwordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+					passSet == constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E) {
+					if (Root::blockRoot()) {
+						std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+					}
+					else {
+						std::cout << "Can't invoke that command now, please try again!" << std::endl;
+					}
+				}
 			}
-		}
-		else if (mode == "del") {
+			else if (mode == "on") {
 
-		}
-		else if (mode == "on") {
+			}
+			else if (mode == "off") {
 
-		}
-		else if (mode == "off") {
+			}
+			else {
 
+			}
 		}
 		else {
-
+			std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
 		}
+		RegCloseKey(rootLockedKey);
 		return errCode;
 	};
 	bool Root::isRootMode() {
 		return rootMode;
 	}
 	char Root::setParams(std::vector<std::string> params) {
-		if (params.size() > 1) {
+		while(params.size() > 1) {
 			std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
-			while (params[1] == "root") {
+			if (params[1] == "root")
 				params.erase(params.begin());
-				std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
-			}
+			else break;
+		}
+		if (params.size() > 1) {
 			this->commandObj = CommandFactory::getInstance(params[1]);
 			if (this->commandObj == nullptr) {
 				this->errCode = setRootMode(params[1]);
