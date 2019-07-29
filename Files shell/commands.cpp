@@ -65,6 +65,7 @@ namespace commands {
 										//TODO create hash of new password for security
 										if (passwordTmpFile.is_open()) {
 											passwordTmpFile.write(confirmNewPassPair.first.c_str(), static_cast<unsigned long long int>(confirmNewPassPair.first.size()) + 1);
+											std::cout << "Password is changed! Exiting..." << std::endl;
 											break;
 										}
 										else {
@@ -88,9 +89,9 @@ namespace commands {
 				else if (passSet == constants::passwordIsSet::PASS_N_SET) {
 					if (!std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName)) {
 						std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName);
-						int fileAttr = GetFileAttributes((LPCWSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName).c_str());
+						int fileAttr = GetFileAttributesA((LPCSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName).c_str());
 						if ((fileAttr & FILE_ATTRIBUTE_HIDDEN) == 0) {
-							SetFileAttributes((LPCWSTR)passFilePath.c_str(), fileAttr | FILE_ATTRIBUTE_HIDDEN);
+							SetFileAttributesA((LPCSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName).c_str(), fileAttr | FILE_ATTRIBUTE_HIDDEN);
 						}
 					}
 					while (true) {
@@ -119,9 +120,9 @@ namespace commands {
 								//TODO create hash of new password for security
 								if (passwordTmpFile.is_open()) {
 									passwordTmpFile.write(confirmNewPassPair.first.c_str(), static_cast<long long int>(confirmNewPassPair.first.size()) + 1);
-									int fileAttr = GetFileAttributes((LPCWSTR)passFilePath.c_str());
+									int fileAttr = GetFileAttributesA((LPCSTR)passFilePath.c_str());
 									if ((fileAttr & FILE_ATTRIBUTE_HIDDEN) == 0) {
-										SetFileAttributes((LPCWSTR)passFilePath.c_str(), fileAttr | FILE_ATTRIBUTE_HIDDEN);
+										SetFileAttributesA((LPCSTR)passFilePath.c_str(), fileAttr | FILE_ATTRIBUTE_HIDDEN);
 									}
 									std::cout << "Password is set! Exiting..." << std::endl;
 								}
@@ -170,6 +171,7 @@ namespace commands {
 								passFile.close();
 								std::remove(passFilePath.c_str());
 								RegDeleteKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FiSh\\isPassSet", KEY_WOW64_64KEY, 0);
+								std::cout << "Password is deleted! Exiting..." << std::endl;
 							}
 							else {
 								std::cout << "Current password is incorrect!" << std::endl;
@@ -194,10 +196,70 @@ namespace commands {
 				}
 			}
 			else if (mode == "on") {
-
+				if (passSet == constants::passwordIsSet::PASS_SET) {
+						std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
+						if (passFile.is_open()) {
+							std::cout << "Enter current password to turn on root mode!" << std::endl;
+							std::pair<std::string, unsigned char> currentPassPair;
+							do {
+								std::cout << "Current password: ";
+								currentPassPair = utils::requestPassword(false);
+							} while (currentPassPair.second == 27 && !utils::askDecision());
+							if (currentPassPair.second == 27) {
+								std::cout << "Turning root mode on canceled! Exiting..." << std::endl;
+							}
+							else {
+								//TODO create hash of input password for security
+								char passwordFromFile[256] = "";
+								passFile.read(passwordFromFile, 256);
+								if (currentPassPair.first == passwordFromFile) {
+									Root::rootMode = true;
+									std::cout << "Root mode turned on now! Exiting..." << std::endl;
+								}
+								else {
+									Root::rootMode = false;
+									std::cout << "Password is incorrect, can't turn on root mode! Exiting..." << std::endl;
+								}
+							}
+						}
+						else {
+							std::cout << "Couldn't get current password! Exiting..." << std::endl;
+						}
+				}
+				else if (passSet == constants::passwordIsSet::PASS_N_SET) {
+					std::cout << "Root password is not set! Please set root password to turn on root mode! Exiting..." << std::endl;
+				}
+				else if (passSet == constants::passwordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+					passSet == constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E) {
+					if (Root::blockRoot()) {
+						std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+					}
+					else {
+						std::cout << "Can't invoke that command now, please try again!" << std::endl;
+					}
+				}
 			}
 			else if (mode == "off") {
-
+				if (passSet == constants::passwordIsSet::PASS_SET) {
+					Root::rootMode = false;
+					std::cout << "Root mode is turned off now! Exiting..." << std::endl;
+				}
+				else {
+					if (Root::rootMode ||
+						(passSet == constants::passwordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+						passSet == constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E)) {
+						if (Root::blockRoot()) {
+							std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+						}
+						else {
+							std::cout << "Can't invoke that command now, please try again!" << std::endl;
+						}
+						Root::rootMode = false;
+					}
+					else {
+						std::cout << "Root mode is already turned off! Exiting..." << std::endl;
+					}
+				}
 			}
 			else {
 
