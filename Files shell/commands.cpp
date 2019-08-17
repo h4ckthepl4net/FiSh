@@ -68,7 +68,7 @@ namespace commands {
 							}
 						}
 						else if (passSet == constants::PasswordIsSet::PASS_N_SET) {
-							std::cout << "Root password is not set! Please set root password and execute commad again! Exiting..." << std::endl;
+							std::cout << "Root password is not set! Please set root password and execute command again! Exiting..." << std::endl;
 							Root::rootMode = false;
 						}
 						else if (passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
