@@ -11,11 +11,19 @@ namespace constants {
 	extern const std::experimental::filesystem::v1::path temp_path;
 	extern std::string temp_directory_name;
 
-	enum passwordIsSet {
-		PASS_N_SET = 0, //Password is not set
-		PASS_SET = 1, //Password is set
-		REG_KEY_E_PASS_FILE_N_E = 2, //Registry key exists, password file not exists
-		REG_KEY_N_E_PASS_FILE_E = 3, //Registry key not exists, password file exists
+	enum PasswordIsSet {
+		PASS_N_SET, //Password is not set
+		PASS_SET, //Password is set
+		REG_KEY_E_PASS_FILE_N_E, //Registry key exists, password file not exists
+		REG_KEY_N_E_PASS_FILE_E, //Registry key not exists, password file exists
+	};
+
+	enum RootOperationType {
+		NO_OPERATION, //No any operation
+		SET_ROOT_PASS, //Set root mode password
+		DEL_ROOT_PASS, //Delete root mode password
+		ON_ROOT_MODE, //Turn root mode on
+		OFF_ROOT_MODE, //Turn root mode off
 	};
 
 }

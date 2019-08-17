@@ -25,9 +25,9 @@ namespace utils {
 	std::vector<std::string> readCommand();
 	bool askDecision(const char[] = "Are you sure? (Y/N)");
 	
-	void printPseudoPass(unsigned short, char);
-	constants::passwordIsSet checkIfPasswordIsSet();
-	std::pair<std::string, unsigned char> requestPassword(bool);
+	void printPseudoPass(unsigned short, char = '*');
+	constants::PasswordIsSet checkIfPasswordIsSet();
+	std::pair<std::string, unsigned char> requestPassword(bool = false);
 
 }
 

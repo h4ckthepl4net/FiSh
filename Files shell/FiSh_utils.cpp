@@ -91,12 +91,12 @@ namespace utils {
 		} while (1);
 	}
 
-	void printPseudoPass(unsigned short length, char chrToPrint = '*') {
+	void printPseudoPass(unsigned short length, char chrToPrint) {
 		for (int i = 0; i < length; i++) {
 			std::cout << chrToPrint;
 		}
 	}
-	constants::passwordIsSet checkIfPasswordIsSet() {
+	constants::PasswordIsSet checkIfPasswordIsSet() {
 		bool defaultConditions = false;
 #ifdef _WIN32
 		HKEY key;
@@ -106,13 +106,13 @@ namespace utils {
 		RegCloseKey(key);
 #endif
 		if (std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password")) {
-			return (defaultConditions) ? constants::passwordIsSet::PASS_SET : constants::passwordIsSet::REG_KEY_N_E_PASS_FILE_E;
+			return (defaultConditions) ? constants::PasswordIsSet::PASS_SET : constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E;
 		}
 		else {
-			return (defaultConditions) ? constants::passwordIsSet::REG_KEY_E_PASS_FILE_N_E : constants::passwordIsSet::PASS_N_SET;
+			return (defaultConditions) ? constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E : constants::PasswordIsSet::PASS_N_SET;
 		}
 	}
-	std::pair<std::string, unsigned char> requestPassword(bool settingPassword = false) {
+	std::pair<std::string, unsigned char> requestPassword(bool settingPassword) {
 		std::string inputPassword;
 		unsigned char lastChar;
 		while (true) {

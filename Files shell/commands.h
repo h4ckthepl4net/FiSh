@@ -33,22 +33,30 @@ namespace commands {
 		virtual char execute() = 0;
 	};
 
-	class Root : ICommand {
+	class Root : public ICommand {
 		friend class CommandFactory;
+		class RootOperations : public ICommand {
+			friend class CommandFactory;
+		private:
+			constants::RootOperationType operation = constants::RootOperationType::NO_OPERATION;
+			RootOperations();
+		public:
+			virtual char setParams(std::vector<std::string>) override;
+			virtual char execute() override;
+		};
 	private:
 		static bool rootMode;
-		std::string mode;
 		ICommand* commandObj = nullptr;
 		Root();
 	public:
-		static bool isRootMode();
 		static bool blockRoot();
-		static char setRootMode(std::string mode);
+		static bool isRootBlocked();
+		static bool isRootMode();
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};
 
-	class Delete : ICommand {
+	class Delete : public ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -58,7 +66,7 @@ namespace commands {
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};
-	class Add : ICommand {
+	class Add : public ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -70,7 +78,7 @@ namespace commands {
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};
-	class Trunc : ICommand {
+	class Trunc : public ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -81,7 +89,7 @@ namespace commands {
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
 	};
-	class Output : ICommand {
+	class Output : public ICommand {
 		friend class CommandFactory;
 	private:
 		std::string path;
@@ -99,9 +107,11 @@ namespace commands {
 	private:
 		static std::mutex mtx;
 		static std::map<std::string, ICommand*> instances;
+		static Root::RootOperations* rootOperations;
 		static ICommand* createInstance(std::string);
 	public:
 		static ICommand* getInstance(std::string);
+		static ICommand* getRootOperationsObj();
 		static void clearFactory();
 	};
 
