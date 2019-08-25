@@ -30,7 +30,6 @@ namespace filesystem = std::experimental::filesystem;
 int main()
 {
 	utils::getProgramTempDirectoryPath();
-	std::cout << constants::temp_directory_name << std::endl;
 	while (1) {
 		std::vector<std::string> inputCommand = utils::readCommand();
 		commands::ICommand* commandObject = commands::CommandFactory::getInstance(inputCommand[0]);

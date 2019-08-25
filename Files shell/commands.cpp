@@ -36,13 +36,13 @@ namespace commands {
 			}
 			else {
 				if (!Root::isRootBlocked()) {
+					constants::PasswordIsSet passSet = utils::checkIfPasswordIsSet();
 					if (!Root::rootMode) {
-						constants::PasswordIsSet passSet = utils::checkIfPasswordIsSet();
 						std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
 						if (passSet == constants::PasswordIsSet::PASS_SET) {
 							std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
 							if (passFile.is_open()) {
-								std::cout << "Enter root password to execute command" << std::endl;
+								std::cout << "Enter root password to execute the command!" << std::endl;
 								std::pair<std::string, unsigned char> currentPassPair;
 								do {
 									std::cout << "Password: ";
@@ -56,7 +56,7 @@ namespace commands {
 									char passwordFromFile[256] = "";
 									passFile.read(passwordFromFile, 256);
 									if (currentPassPair.first == passwordFromFile) {
-										Root::rootMode = true;
+										this->errCode = this->commandObj->setParams(params);
 									}
 									else {
 										std::cout << "Password is incorrect!" << std::endl;
@@ -69,7 +69,6 @@ namespace commands {
 						}
 						else if (passSet == constants::PasswordIsSet::PASS_N_SET) {
 							std::cout << "Root password is not set! Please set root password and execute command again! Exiting..." << std::endl;
-							Root::rootMode = false;
 						}
 						else if (passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
 							passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E) {
@@ -79,7 +78,17 @@ namespace commands {
 							else {
 								std::cout << "Can't invoke that command now, please try again!" << std::endl;
 							}
+						}
+					}
+					else if (passSet == constants::PasswordIsSet::PASS_N_SET ||
+							passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+							passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E) {
+						if (Root::blockRoot()) {
+							std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
 							Root::rootMode = false;
+						}
+						else {
+							std::cout << "Can't invoke that command now, please try again!" << std::endl;
 						}
 					}
 				}
@@ -296,73 +305,94 @@ namespace commands {
 					}
 				}
 				else if (this->operation == constants::RootOperationType::ON_ROOT_MODE) {
-					if (passSet == constants::PasswordIsSet::PASS_SET) {
-						std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
-						if (passFile.is_open()) {
-							std::cout << "Enter current password to turn on root mode!" << std::endl;
-							std::pair<std::string, unsigned char> currentPassPair;
-							do {
-								std::cout << "Current password: ";
-								currentPassPair = utils::requestPassword(false);
-							} while (currentPassPair.second == 27 && !utils::askDecision());
-							if (currentPassPair.second == 27) {
-								std::cout << "Turning root mode on canceled! Exiting..." << std::endl;
+					if (Root::rootMode) {
+						if (passSet == constants::PasswordIsSet::PASS_N_SET ||
+							passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+							passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E) {
+							if (Root::blockRoot()) {
+								std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
 							}
 							else {
-								// TODO: create hash of input password for security
-								char passwordFromFile[256] = "";
-								passFile.read(passwordFromFile, 256);
-								if (currentPassPair.first == passwordFromFile) {
-									Root::rootMode = true;
-									std::cout << "Root mode turned on now! Exiting..." << std::endl;
-								}
-								else {
-									Root::rootMode = false;
-									std::cout << "Password is incorrect, can't turn on root mode! Exiting..." << std::endl;
-								}
+								std::cout << "Can't invoke that command now, please try again!" << std::endl;
 							}
 						}
 						else {
-							std::cout << "Couldn't get current password! Exiting..." << std::endl;
+							std::cout << "Root mode is already turned on! Exiting..." << std::endl;
 						}
 					}
-					else if (passSet == constants::PasswordIsSet::PASS_N_SET) {
-						std::cout << "Root password is not set! Please set root password to turn on root mode! Exiting..." << std::endl;
-					}
-					else if (passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
-						passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E) {
-						if (Root::blockRoot()) {
-							std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+					else {
+						if (passSet == constants::PasswordIsSet::PASS_SET) {
+							std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
+							if (passFile.is_open()) {
+								std::cout << "Enter current password to turn on root mode!" << std::endl;
+								std::pair<std::string, unsigned char> currentPassPair;
+								do {
+									std::cout << "Current password: ";
+									currentPassPair = utils::requestPassword(false);
+								} while (currentPassPair.second == 27 && !utils::askDecision());
+								if (currentPassPair.second == 27) {
+									std::cout << "Turning root mode on canceled! Exiting..." << std::endl;
+								}
+								else {
+									// TODO: create hash of input password for security
+									char passwordFromFile[256] = "";
+									passFile.read(passwordFromFile, 256);
+									if (currentPassPair.first == passwordFromFile) {
+										Root::rootMode = true;
+										std::cout << "Root mode is turned on now! Exiting..." << std::endl;
+									}
+									else {
+										std::cout << "Password is incorrect, can't turn on root mode! Exiting..." << std::endl;
+									}
+								}
+							}
+							else {
+								std::cout << "Couldn't get current password! Exiting..." << std::endl;
+							}
 						}
-						else {
-							std::cout << "Can't invoke that command now, please try again!" << std::endl;
+						else if (passSet == constants::PasswordIsSet::PASS_N_SET) {
+							std::cout << "Root password is not set! Please set root password to turn on root mode! Exiting..." << std::endl;
+						}
+						else if (passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+							passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E) {
+							if (Root::blockRoot()) {
+								std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+							}
+							else {
+								std::cout << "Can't invoke that command now, please try again!" << std::endl;
+							}
 						}
 					}
 				}
 				else if (this->operation == constants::RootOperationType::OFF_ROOT_MODE) {
-					if (passSet == constants::PasswordIsSet::PASS_SET) {
-						Root::rootMode = false;
-						std::cout << "Root mode is turned off now! Exiting..." << std::endl;
-					}
-					else {
-						if (Root::rootMode) {
-							if (passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
-								passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E ||
-								passSet == constants::PasswordIsSet::PASS_N_SET) {
-								if (Root::blockRoot()) {
-									std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
-								}
-								else {
-									std::cout << "Can't invoke that command now, please try again!" << std::endl;
-								}
+					if(Root::rootMode) {
+						if (passSet == constants::PasswordIsSet::PASS_SET) {
+							Root::rootMode = false;
+							std::cout << "Root mode is turned off now! Exiting..." << std::endl;
+						}
+						else if (passSet == constants::PasswordIsSet::PASS_N_SET ||
+							passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
+							passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E) {
+							if (Root::blockRoot()) {
+								std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
 							}
 							else {
-								std::cout << "Root mode is turned off now! Exiting..." << std::endl;
+								std::cout << "Can't invoke that command now, please try again!" << std::endl;
 							}
-							Root::rootMode = false;
+						}
+					}
+					else {
+						if (passSet == constants::PasswordIsSet::PASS_SET ||
+							passSet == constants::PasswordIsSet::PASS_N_SET) {
+							std::cout << "Root mode is already turned off! Exiting..." << std::endl;
 						}
 						else {
-							std::cout << "Root mode is already turned off! Exiting..." << std::endl;
+							if (Root::blockRoot()) {
+								std::cout << "Something went wrong, cause root mode is blocked for you!" << std::endl;
+							}
+							else {
+								std::cout << "Can't invoke that command now, please try again!" << std::endl;
+							}
 						}
 					}
 				}
@@ -381,7 +411,7 @@ namespace commands {
 	};
 
 	Delete::Delete() = default;
-	char Delete::setParams(std::vector<std::string> params) {
+	char Delete::setParams(std::vector<std::string> params) {		
 		std::transform(params[0].begin(), params[0].end(), params[0].begin(), tolower);
 		if (params.size() == 2) {
 			if (params[1] == "*") {
