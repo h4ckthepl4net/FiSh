@@ -21,7 +21,7 @@ namespace constants {
 	enum RootOperationType {
 		NO_OPERATION, //No any operation
 		SET_ROOT_PASS, //Set root mode password
-		DEL_ROOT_PASS, //Delete root mode password
+		REMOVE_ROOT_PASS, //Remove root mode password
 		ON_ROOT_MODE, //Turn root mode on
 		OFF_ROOT_MODE, //Turn root mode off
 	};

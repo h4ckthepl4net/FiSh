@@ -111,7 +111,7 @@ namespace commands {
 
 	Root::RootOperations::RootOperations() = default;
 	char Root::RootOperations::setParams(std::vector<std::string> params) {
-		std::vector<std::string> operationArr = {"set", "del", "on", "off"};
+		std::vector<std::string> operationArr = {"set", "remove", "on", "off"};
 		auto it = std::find(operationArr.begin(), operationArr.end(), params[1]);
 		if (it != operationArr.end()) {
 			this->operation = static_cast<constants::RootOperationType>(it-operationArr.begin()+1);
@@ -260,18 +260,18 @@ namespace commands {
 						}
 					}
 				}
-				else if (this->operation == constants::RootOperationType::DEL_ROOT_PASS) {
+				else if (this->operation == constants::RootOperationType::REMOVE_ROOT_PASS) {
 					if (passSet == constants::PasswordIsSet::PASS_SET) {
 						std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
 						if (passFile.is_open()) {
-							std::cout << "Enter current password to delete existing password!" << std::endl;
+							std::cout << "Enter current password to remove existing password!" << std::endl;
 							std::pair<std::string, unsigned char> currentPassPair;
 							do {
 								std::cout << "Current password: ";
 								currentPassPair = utils::requestPassword(false);
 							} while (currentPassPair.second == 27 && !utils::askDecision());
 							if (currentPassPair.second == 27) {
-								std::cout << "Deleting password canceled! Exiting..." << std::endl;
+								std::cout << "Removing password canceled! Exiting..." << std::endl;
 							}
 							else {
 								char passwordFromFile[256] = "";
@@ -280,10 +280,10 @@ namespace commands {
 									passFile.close();
 									std::remove(passFilePath.c_str());
 									RegDeleteKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\FiSh\\isPassSet", KEY_WOW64_64KEY, 0);
-									std::cout << "Password is deleted! Exiting..." << std::endl;
+									std::cout << "Password is removed! Exiting..." << std::endl;
 								}
 								else {
-									std::cout << "Current password is incorrect!" << std::endl;
+									std::cout << "Current password is incorrect! Please try the command again..." << std::endl;
 								}
 							}
 						}
@@ -292,7 +292,7 @@ namespace commands {
 						}
 					}
 					else if (passSet == constants::PasswordIsSet::PASS_N_SET) {
-						std::cout << "Root password is not set!" << std::endl;
+						std::cout << "Root password is not set! Exiting..." << std::endl;
 					}
 					else if (passSet == constants::PasswordIsSet::REG_KEY_E_PASS_FILE_N_E ||
 						passSet == constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E) {
