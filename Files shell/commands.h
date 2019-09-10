@@ -31,6 +31,7 @@ namespace commands {
 	public:
 		virtual char setParams(std::vector<std::string>) = 0;
 		virtual char execute() = 0;
+		virtual void reset() = 0;
 	};
 
 	class Root : public ICommand {
@@ -43,6 +44,7 @@ namespace commands {
 		public:
 			virtual char setParams(std::vector<std::string>) override;
 			virtual char execute() override;
+			virtual void reset() override;
 		};
 	private:
 		static bool rootMode;
@@ -54,22 +56,26 @@ namespace commands {
 		static bool isRootMode();
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
+		virtual void reset() override;
 	};
 
 	class Delete : public ICommand {
 		friend class CommandFactory;
 	private:
-		std::string path;
+		bool isExecutedAsRoot = false;
+		std::string path = "";
 		bool deleteEverything = false;
 		Delete();
 	public:
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
+		virtual void reset() override;
 	};
 	class Add : public ICommand {
 		friend class CommandFactory;
 	private:
-		std::string path;
+		bool isExecutedAsRoot = false;
+		std::string path = "";
 		bool createFileIfMissing = false;
 		bool appendData = false;
 		int index = -1;
@@ -77,28 +83,33 @@ namespace commands {
 	public:
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
+		virtual void reset() override;
 	};
 	class Trunc : public ICommand {
 		friend class CommandFactory;
 	private:
-		std::string path;
+		bool isExecutedAsRoot = false;
+		std::string path = "";
 		bool addData = false;
 		int index = -1;
 		Trunc();
 	public:
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
+		virtual void reset() override;
 	};
 	class Output : public ICommand {
 		friend class CommandFactory;
 	private:
-		std::string path;
+		bool isExecutedAsRoot = false;
+		std::string path = "";
 		int index = -1;
 		bool printStructure = false;
 		Output();
 	public:
 		virtual char setParams(std::vector<std::string>) override;
 		virtual char execute() override;
+		virtual void reset() override;
 	};
 
 

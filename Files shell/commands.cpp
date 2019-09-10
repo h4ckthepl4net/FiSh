@@ -22,6 +22,7 @@ namespace commands {
 		return rootMode;
 	}
 	char Root::setParams(std::vector<std::string> params) {
+		// TODO: not using paramsSet field
 		while(params.size() > 1) {
 			std::transform(params[1].begin(), params[1].end(), params[1].begin(), ::tolower);
 			if (params[1] == "root")
@@ -38,7 +39,7 @@ namespace commands {
 				if (!Root::isRootBlocked()) {
 					constants::PasswordIsSet passSet = utils::checkIfPasswordIsSet();
 					if (!Root::rootMode) {
-						std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
+						std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::default_dir_name + "\\.password";
 						if (passSet == constants::PasswordIsSet::PASS_SET) {
 							std::fstream passFile(passFilePath, std::fstream::in | std::fstream::binary);
 							if (passFile.is_open()) {
@@ -103,11 +104,18 @@ namespace commands {
 		return this->errCode;
 	};
 	char Root::execute() {
+		// TODO: check paramsSet
 		if (this->commandObj) {
 			this->errCode = this->commandObj->execute();
 		}
 		return this->errCode;
 	};
+	void Root::reset() {
+		this->errCode = 0;
+		this->paramsSet = false; // TODO: not using paramsSet field
+		this->commandObj->reset();
+		this->commandObj = nullptr;
+	}
 
 	Root::RootOperations::RootOperations() = default;
 	char Root::RootOperations::setParams(std::vector<std::string> params) {
@@ -129,7 +137,7 @@ namespace commands {
 		if (this->paramsSet && this->operation) {
 			if (!Root::isRootBlocked()) {
 				constants::PasswordIsSet passSet = utils::checkIfPasswordIsSet();
-				std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password";
+				std::string passFilePath = constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::default_dir_name + "\\.password";
 				if (this->operation == constants::RootOperationType::SET_ROOT_PASS)
 				{
 					if (passSet == constants::PasswordIsSet::PASS_SET) {
@@ -196,11 +204,11 @@ namespace commands {
 						}
 					}
 					else if (passSet == constants::PasswordIsSet::PASS_N_SET) {
-						if (!std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName)) {
-							std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName);
-							int fileAttr = GetFileAttributesA((LPCSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName).c_str());
+						if (!std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::default_dir_name)) {
+							std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::default_dir_name);
+							int fileAttr = GetFileAttributesA((LPCSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::default_dir_name).c_str());
 							if ((fileAttr & FILE_ATTRIBUTE_HIDDEN) == 0) {
-								SetFileAttributesA((LPCSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName).c_str(), fileAttr | FILE_ATTRIBUTE_HIDDEN);
+								SetFileAttributesA((LPCSTR)(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::default_dir_name).c_str(), fileAttr | FILE_ATTRIBUTE_HIDDEN);
 							}
 						}
 						while (true) {
@@ -409,26 +417,120 @@ namespace commands {
 		}
 		return this->errCode;
 	};
+	void Root::RootOperations::reset() {
+		this->errCode = 0;
+		this->paramsSet = false;
+		this->operation = constants::RootOperationType::NO_OPERATION;
+	}
 
 	Delete::Delete() = default;
 	char Delete::setParams(std::vector<std::string> params) {		
 		std::transform(params[0].begin(), params[0].end(), params[0].begin(), tolower);
+		if (params[0] == "root") {
+			this->isExecutedAsRoot = true;
+			params.erase(params.begin());
+		}
 		if (params.size() == 2) {
-			if (params[1] == "*") {
-
+			if (params[1] == "*" && !this->isExecutedAsRoot && !Root::isRootMode()) {
+				this->deleteEverything = true;
+				this->paramsSet = true;
 			}
-			else if (std::experimental::filesystem::exists(params[1])) {
-
+			else if (params[1] == "*" && (this->isExecutedAsRoot || Root::isRootMode())) {
+				// TODO: add error code (cannot exec delete all in root mode [Dangerous!])
+			}
+			else {
+				std::experimental::filesystem::path inputPath = params[1];
+				inputPath.make_preferred();
+				if (inputPath.is_relative()) {
+					inputPath = "./files directory" / inputPath;
+				}
+				inputPath = std::experimental::filesystem::absolute(inputPath);
+				if (utils::isInWorkingDirectory(inputPath) || this->isExecutedAsRoot || commands::Root::isRootMode()) {
+					this->path = inputPath.u8string();
+					this->paramsSet = true;
+				}
+				else {
+					// TODO: add error code (cannot exec delete file outside working dir without root mode [Dangerous!])
+				}
 			}
 		}
 		else {
-
+			// TODO: add error code (no enough params)
 		}
 		return 0;
 	};
 	char Delete::execute() {
+		if (this->paramsSet) {
+			if (this->deleteEverything) {
+				if (!this->isExecutedAsRoot) {
+					if (utils::askDecision("Are you sure you want to delete everything in working directory? (Y/N)")) {
+						uintmax_t itemsDeleted = 0;
+						for (auto &file : std::experimental::filesystem::directory_iterator("./files directory/")) {
+							bool isDirectory = std::experimental::filesystem::is_directory(file.path());
+							std::experimental::filesystem::remove_all(file.path());
+							itemsDeleted++;
+							if (itemsDeleted <= 25) {
+								std::cout << ((isDirectory) ? "_!*Dir*!_   " : "") << file.path() << std::endl;
+							}
+						}
+						if (itemsDeleted > 25) {
+							std::cout << "...and " << itemsDeleted - 25 << " more!" << std::endl;
+						}
+						std::cout << "Deleted " << itemsDeleted << " items! Exiting..." << std::endl;
+					}
+					else {
+						std::cout << "Command execution canceled! Exiting..." << std::endl;
+					}
+				}
+				else {
+					// TODO: add error code (cannot exec delete all in root mode [Dangerous!])
+				}
+			}
+			else if (this->path != "") {
+				if (this->path.find('/') == std::string::npos && this->path.find('*') == std::string::npos &&
+					this->path.find('?') == std::string::npos && this->path.find('"') == std::string::npos &&
+					this->path.find('<') == std::string::npos && this->path.find('>') == std::string::npos &&
+					this->path.find('|') == std::string::npos) {
+					if (std::experimental::filesystem::exists(this->path)) {
+						if (!std::experimental::filesystem::is_directory(this->path)) {							
+							if (utils::askDecision("Are you sure you want delete selected file? (Y/N)")) {
+								std::experimental::filesystem::remove(this->path);
+							}
+							else {
+								std::cout << std::endl << "Command execution canceled! Exiting..." << std::endl;
+							}
+						}
+						else {
+							std::cout << std::endl << "Selected object is directory" << std::endl;
+							if (utils::askDecision("Do you want to delete directory and everything inside? (Y/N)")) {
+								std::experimental::filesystem::remove_all(this->path);
+							}
+							else {
+								std::cout << std::endl << "Command execution canceled! Exiting..." << std::endl;
+							}
+						}
+					}
+					else {
+						std::cout << "No such file found! Exiting..." << std::endl;
+					}
+				}
+				else {
+					// TODO: add error message file name is not correct
+				}
+			}
+		}
+		else {
+			// TODO: add error code (params not set)
+		}
 		return 0;
 	};
+	void Delete::reset() {
+		this->errCode = 0;
+		this->paramsSet = false;
+		this->isExecutedAsRoot = false;
+		this->path = "";
+		this->deleteEverything = false;
+	}
 
 	Add::Add() = default;
 	char Add::setParams(std::vector<std::string> params) {
@@ -437,6 +539,15 @@ namespace commands {
 	char Add::execute() {
 		return 0;
 	};
+	void Add::reset() {
+		this->errCode = 0;
+		this->paramsSet = false;
+		this->isExecutedAsRoot = false;
+		this->path = "";
+		this->createFileIfMissing = false;
+		this->appendData = false;
+		this->index = -1;
+	}
 
 	Trunc::Trunc() = default;
 	char Trunc::setParams(std::vector<std::string>) {
@@ -445,6 +556,14 @@ namespace commands {
 	char Trunc::execute() {
 		return 0;
 	};
+	void Trunc::reset() {
+		this->errCode = 0;
+		this->paramsSet = false;
+		this->isExecutedAsRoot = false;
+		this->path = "";
+		this->addData = false;
+		this->index = -1;
+	}
 
 	Output::Output() = default;
 	char Output::setParams(std::vector<std::string>) {
@@ -453,6 +572,14 @@ namespace commands {
 	char Output::execute() {
 		return 0;
 	};
+	void Output::reset() {
+		this->errCode = 0;
+		this->paramsSet = false;
+		this->isExecutedAsRoot = false;
+		this->path = "";
+		this->index = -1;
+		this->printStructure = false;
+	}
 
 
 

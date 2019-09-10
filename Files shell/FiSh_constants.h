@@ -7,9 +7,10 @@
 
 namespace constants {
 
-	extern const std::string defaultDirName;
+	extern const std::string default_dir_name;
 	extern const std::experimental::filesystem::v1::path temp_path;
 	extern std::string temp_directory_name;
+	extern std::string working_dir;
 
 	enum PasswordIsSet {
 		PASS_N_SET, //Password is not set

@@ -24,6 +24,12 @@ namespace utils {
 		}
 		return name;
 	}
+	std::string getCurrentDir() {
+		//TODO: check for registry key
+		char buffer[FILENAME_MAX];
+		GetCurrentDirectoryA(FILENAME_MAX, buffer);
+		return std::string(buffer) + "\\files directory"; // TODO: delete constant string from return statement
+	}
 	char getProgramTempDirectoryPath() {
 		bool defaultCase = true;
 #ifdef _WIN32
@@ -59,10 +65,35 @@ namespace utils {
 		RegCloseKey(key);
 #endif
 		if (defaultCase) {
-			constants::temp_directory_name = constants::defaultDirName;
-			std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::defaultDirName);
+			constants::temp_directory_name = constants::default_dir_name;
+			std::experimental::filesystem::create_directory(constants::temp_path.u8string() + constants::default_dir_name);
 		}
 		return 0;
+	}
+	std::vector<std::string> getPathByParts(std::experimental::filesystem::path path) {
+		std::vector<std::string> pathByParts;
+		for (auto& part : path) {
+			std::string partStr = part.u8string();
+			if (partStr == ".." &&
+				((path.is_relative() && pathByParts.size() > 0) ||
+				(path.is_absolute() && pathByParts.size() > 2)) &&
+				pathByParts.back() != "..") {
+				pathByParts.erase(pathByParts.end() - 1);
+			}
+			else if (partStr != ".") {
+				pathByParts.push_back(partStr);
+			}
+		}
+		return pathByParts;
+	};
+	bool isInWorkingDirectory(std::experimental::filesystem::path path) {
+		std::vector<std::string> currentPathByParts = utils::getPathByParts(utils::getCurrentDir());
+		std::vector<std::string> pathByParts = utils::getPathByParts(path);
+		for (int i = 0, length = currentPathByParts.size(); i < length; i++) {
+			if (currentPathByParts[i] != pathByParts[i])
+				return false;
+		}
+		return true;
 	}
 
 	std::vector<std::string> readCommand() {
@@ -73,6 +104,20 @@ namespace utils {
 		std::istringstream command(tmp);
 		std::vector<std::string> result;
 		while (command >> tmp) {
+			if (tmp.find('"') != std::string::npos) {
+				bool doubleQuoteFlag;
+				char nextChar = command.get();
+				if (nextChar != EOF) {
+					do {
+						doubleQuoteFlag = std::count(tmp.begin(), tmp.end(), '"') % 2;
+						if (nextChar == '"')
+							doubleQuoteFlag ^= 1;
+						tmp += nextChar;
+						nextChar = command.get();
+						doubleQuoteFlag = nextChar != EOF;
+					} while ((doubleQuoteFlag || nextChar != ' ') && nextChar != EOF);
+				}
+			}
 			result.push_back(tmp);
 		}
 		return result;
@@ -105,7 +150,7 @@ namespace utils {
 		}
 		RegCloseKey(key);
 #endif
-		if (std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::defaultDirName + "\\.password")) {
+		if (std::experimental::filesystem::exists(constants::temp_path.u8string() + constants::temp_directory_name + "\\." + constants::default_dir_name + "\\.password")) {
 			return (defaultConditions) ? constants::PasswordIsSet::PASS_SET : constants::PasswordIsSet::REG_KEY_N_E_PASS_FILE_E;
 		}
 		else {
@@ -154,4 +199,5 @@ namespace utils {
 		}
 		return std::make_pair(inputPassword, lastChar);
 	}
+
 }

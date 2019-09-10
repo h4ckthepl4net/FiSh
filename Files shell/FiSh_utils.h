@@ -20,7 +20,10 @@
 namespace utils {
 
 	std::string generateRandomName();
+	std::string getCurrentDir();
 	char getProgramTempDirectoryPath();
+	std::vector<std::string> getPathByParts(std::experimental::filesystem::path);
+	bool isInWorkingDirectory(std::experimental::filesystem::path);
 	
 	std::vector<std::string> readCommand();
 	bool askDecision(const char[] = "Are you sure? (Y/N)");

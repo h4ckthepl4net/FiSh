@@ -36,6 +36,7 @@ int main()
 		if (commandObject) {
 			commandObject->setParams(inputCommand);
 			commandObject->execute();
+			commandObject->reset();
 		}
 		else {
 			// TODO: Show help message
